@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Limit Tracker</title>
+  <link rel="stylesheet" href="popup.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo-mark">
+        <span class="logo-dot dot-r"></span>
+        <span class="logo-dot dot-y"></span>
+        <span class="logo-dot dot-g"></span>
+      </div>
+      <span class="header-title">AI Limit Tracker</span>
+    </div>
+    <div class="header-right">
+      <span class="badge-count" id="availableCount"></span>
+      <button class="icon-btn" id="btnAdd" title="Track new limit">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <line x1="8" y1="2" x2="8" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="2" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main views -->
+  <main class="main">
+
+    <!-- VIEW: Tool List -->
+    <div id="viewList" class="view active">
+      <div class="tabs">
+        <button class="tab active" data-tab="limited">Limited</button>
+        <button class="tab" data-tab="available">Available</button>
+        <button class="tab" data-tab="all">All</button>
+      </div>
+      <div class="tool-list" id="toolList">
+        <!-- populated by JS -->
+      </div>
+      <div class="empty-state" id="emptyState" style="display:none">
+        <div class="empty-icon">◎</div>
+        <p>No tools tracked yet.</p>
+        <button class="btn-primary small" id="btnAddFirst">Add your first limit →</button>
+      </div>
+
+      <!-- Footer: Import / Export -->
+      <div class="list-footer">
+        <label class="footer-btn" id="btnImportLabel" title="Import từ file ZIP">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2v9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M4 7l4 5 4-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 14h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Import
+          <input type="file" id="csvImportInput" accept=".zip,application/zip" style="display:none">
+        </label>
+        <button class="footer-btn" id="btnExport" title="Export ra file ZIP (CSV + icons)">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <path d="M8 11V2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M4 6l4-5 4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 14h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Export
+        </button>
+      </div>
+    </div>
+
+    <!-- VIEW: Add / Edit -->
+    <div id="viewForm" class="view">
+      <div class="form-header">
+        <button class="back-btn" id="btnBack">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M10 3L5 8L10 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Back
+        </button>
+        <span class="form-title" id="formTitle">Track New Limit</span>
+      </div>
+
+      <div class="form-body">
+
+        <!-- Tool Preset Picker -->
+        <div class="field">
+          <label class="field-label">AI Tool</label>
+          <div class="preset-grid" id="presetGrid">
+            <!-- populated by JS -->
+          </div>
+        </div>
+
+        <!-- Custom name (shown for "Custom") -->
+        <div class="field" id="fieldCustomName" style="display:none">
+          <label class="field-label">Tool name</label>
+          <input type="text" class="input" id="inputCustomName" placeholder="e.g. My Private GPT">
+        </div>
+
+        <!-- Custom icon picker (shown for "Custom") -->
+        <div class="field" id="fieldCustomIcon" style="display:none">
+          <label class="field-label">Icon</label>
+          <div class="icon-picker-row">
+            <div class="icon-preview" id="iconPreview">⚙️</div>
+            <input type="text" class="input icon-input" id="inputCustomIcon" placeholder="Paste emoji or type…" maxlength="4">
+            <label class="btn-ico-upload" title="Upload any image — auto-converted to icon">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path d="M8 2v9M4 7l4-5 4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 13h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              IMG
+              <input type="file" id="iconFileInput" accept="image/*" style="display:none">
+            </label>
+          </div>
+          <div class="icon-grid" id="iconGrid">
+            <!-- populated by JS -->
+          </div>
+        </div>
+
+        <!-- Account -->
+        <div class="field">
+          <label class="field-label">Account <span class="optional">(optional)</span></label>
+          <input type="text" class="input" id="inputAccount" placeholder="e.g. work@gmail.com or @username">
+        </div>
+
+        <!-- Tool URL -->
+        <div class="field" id="fieldToolUrl" style="position:relative">
+          <label class="field-label">Tool URL <span class="optional">(optional)</span></label>
+          <input type="text" class="input" id="inputToolUrl" placeholder="e.g. https://claude.ai" autocomplete="off">
+          <div class="token-form-hint">Click the card in the list to open this link directly.</div>
+        </div>
+
+        <!-- Note -->
+        <div class="field">
+          <label class="field-label">Note <span class="optional">(optional)</span></label>
+          <input type="text" class="input" id="inputNote" placeholder="e.g. Hit opus limit at 11pm">
+        </div>
+
+        <!-- Token / Credit tracking -->
+        <div class="field">
+          <label class="field-label">
+            Token / Credit
+            <span class="optional">(optional)</span>
+          </label>
+          <div class="token-form-row">
+            <input type="number" class="input token-input-used" id="inputTokenUsed"
+                   placeholder="Used" min="0" step="1">
+            <span class="token-sep">/</span>
+            <input type="number" class="input token-input-total" id="inputTokenTotal"
+                   placeholder="Total" min="0" step="1">
+            <input type="text" class="input token-input-unit" id="inputTokenUnit"
+                   placeholder="unit" maxlength="12">
+          </div>
+          <div class="token-form-hint">e.g. 350 / 1000 tokens &nbsp;·&nbsp; 5 / 20 credits</div>
+        </div>
+
+        <!-- Reset strategy -->
+        <div class="field">
+          <label class="field-label">Reset time</label>
+          <div class="reset-strategy">
+            <button class="strategy-btn active" id="stratAuto" data-strategy="auto">
+              <span class="strategy-icon">⟳</span>
+              <span>Auto (policy default)</span>
+            </button>
+            <button class="strategy-btn" id="stratManual" data-strategy="manual">
+              <span class="strategy-icon">✎</span>
+              <span>Set manually</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Auto: shows calculated reset -->
+        <div class="field" id="fieldAutoPreview">
+          <div class="reset-preview">
+            <span class="reset-label">Resets at</span>
+            <span class="reset-time" id="autoResetPreview">—</span>
+          </div>
+          <div class="policy-note" id="policyNote"></div>
+        </div>
+
+        <!-- Manual: datetime picker -->
+        <div class="field" id="fieldManualTime" style="display:none">
+          <div class="manual-time-row">
+            <div class="manual-time-top">
+              <div class="offset-group">
+                <label class="offset-label reset-in-label">RESET IN</label>
+                <input type="number" class="input offset-input" id="inputOffsetHours" placeholder="0" min="0" max="999">
+                <label class="offset-label">h</label>
+                <input type="number" class="input offset-input" id="inputOffsetMinutes" placeholder="0" min="0" max="59">
+                <label class="offset-label">m</label>
+              </div>
+              <div class="time-hhmm-row">
+                <label class="offset-label reset-in-label">RESET AT</label>
+                <input type="text" class="input time-hhmm-input" id="inputResetHHMM" placeholder="HH:MM" maxlength="5" autocomplete="off">
+                <button type="button" class="btn-ampm" id="btnAmPm" style="display:none">PM</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="btnSave">
+          <span id="btnSaveLabel">Start Tracking</span>
+        </button>
+
+        <!-- Edit mode: mark available -->
+        <button class="btn-ghost danger" id="btnMarkAvailable" style="display:none">
+          Mark as available now
+        </button>
+
+        <!-- Edit mode: delete -->
+        <button class="btn-ghost" id="btnDelete" style="display:none">
+          Remove entry
+        </button>
+
+      </div>
+    </div>
+
+  </main>
+
+  <script src="jszip.min.js"></script>
+  <script src="../data/presets.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
